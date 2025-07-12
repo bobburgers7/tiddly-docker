@@ -1,5 +1,4 @@
-# Ensure correct platform is used for multi-architecture support
-FROM --platform=$TARGETPLATFORM node:22.14.0
+FROM node:22.14.0
 
 # renovate: datasource=npm depName=tiddlywiki versioning=npm
 ARG TIDDLYWIKI_VERSION=5.3.7
@@ -11,9 +10,9 @@ RUN npm install --location=global tiddlywiki@${TIDDLYWIKI_VERSION} && \
 # Add the entrypoint script
 ADD tiddlywiki_or_autoinit.sh /bin
 
-# Set environment variables
-ENV WIKI_PATH /wiki
-ENV DISABLE_AUTO_INIT false
+# Set environment variables and remove LegacyKeyValueFormat
+ENV WIKI_PATH=/wiki
+ENV DISABLE_AUTO_INIT=false
 
 # Define entrypoint and default command
 ENTRYPOINT ["tiddlywiki_or_autoinit.sh"]
