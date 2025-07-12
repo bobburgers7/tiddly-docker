@@ -1,5 +1,5 @@
 # Ensure correct platform is used for multi-architecture support
-FROM --platform=$TARGETPLATFORM FROM node:22.14.0
+FROM --platform=$TARGETPLATFORM node:22.14.0
 
 # renovate: datasource=npm depName=tiddlywiki versioning=npm
 ARG TIDDLYWIKI_VERSION=5.3.7
