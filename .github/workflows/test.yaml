@@ -14,18 +14,23 @@ on:
 
 jobs:
   test:
-    name: Test 
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
-      - name: Build
+      - name: Set up QEMU (for ARM builds)
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build (Multi-Arch)
         run: |
-          docker build -t test/tiddly:latest .
+          docker buildx build --platform linux/amd64,linux/arm64 -t test/tiddly:latest .
       - name: Test
         run: |
           env CONTAINER=test/tiddly:latest ./test/bats/bin/bats test/test.bats
+
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
@@ -36,12 +41,15 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
+      - name: Set up QEMU (for ARM builds)
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Compute Version
         id: version
         run: |-
           echo "::set-output name=VERSION::${GITHUB_REF#refs/tags/}"
-          # Find the default tiddlywiki version at this commit in the
-          # Dockerfile.
+          # Find the default tiddlywiki version at this commit in the Dockerfile.
           tw_version="$(cat Dockerfile | egrep '^ARG TIDDLYWIKI_VERSION=' | cut -d= -f2)"
           if [[ -z "${tw_version}" ]]; then
             echo "Failed to find TiddlyWiki version" >&2
@@ -57,12 +65,13 @@ jobs:
       - name: Log into Docker Hub
         uses: docker/login-action@v3
         with:
-          username: jkz0 
+          username: jkz0
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - name: Deploy
+      - name: Deploy (Multi-Arch)
         uses: docker/build-push-action@v6
         with:
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             jkz0/tiddly:latest
             jkz0/tiddly:${{ steps.version.outputs.VERSION }}
